@@ -1,5 +1,14 @@
 API allows to get bid/ask/avg BTCUSDT price with fee.
-.env.development example:
+
+
+# Fast up docker-compose:
+
+```
+npm run dev:up
+```
+
+
+# .env.development example:
 ```
 # Файл окружения для сервиса BTCSERVICE
 
@@ -36,6 +45,7 @@ UPDATE_DELAY=10
 # комиссия сервиса (в процентах)
 SERVICE_FEE=0.01
 ```
+
 
 ## License
 

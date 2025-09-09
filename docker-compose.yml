@@ -1,0 +1,68 @@
+services:
+  redis:
+    image: redis:7.2
+    container_name: "${APP_NAME}_REDIS_${NODE_ENV}"
+    restart: unless-stopped
+    env_file:
+      - "${ENV_FILE}"
+    ports:
+      - "${REDIS_EXTERNAL_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ${NODE_ENV}-network
+
+  backend-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: dev
+      args:
+        NODE_VERSION: ${NODE_VERSION}
+    container_name: "${APP_NAME}_APP_DEV"
+    restart: unless-stopped
+    depends_on:
+      - redis
+    env_file:
+      - "${ENV_FILE}"
+    command: ["npm","run","start:dev"]
+    ports:
+      - "${APP_EXTERNAL_PORT}:${APP_PORT}"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    networks:
+      - dev-network
+    profiles:
+      - dev
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: prod
+      args:
+        NODE_VERSION: ${NODE_VERSION}
+    container_name: "${APP_NAME}_backend_prod"
+    restart: unless-stopped
+    depends_on:
+      - redis
+    env_file:
+      - "${ENV_FILE}"
+    command: ["sh","-c","npm run migrate:prod && npm run start:prod"]
+    ports:
+      - "${APP_EXTERNAL_PORT}:${APP_PORT}"
+    networks:
+      - prod-network
+    profiles:
+      - prod
+
+networks:
+  dev-network:
+    driver: bridge
+  prod-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  node_modules:

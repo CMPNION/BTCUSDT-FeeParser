@@ -53,7 +53,6 @@ export class BurseService {
     let prices: IPrices = await this.getBTCBookTicker();
     const fee = 1 + this.configService.get<number>("service_fee") / 100;
     const fee1 = this.configService.get<number>("service_fee");
-
     prices.askPrice *= fee;
     prices.bidPrice *= fee;
     prices.averagePrice = (prices.askPrice + prices.bidPrice) / 2;

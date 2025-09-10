@@ -2,12 +2,14 @@ import { HttpException, Injectable, HttpStatus } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { CacheService } from "../cache/cache.service";
-import axios, { get } from "axios";
+import axios from "axios";
 import { IBookTicker } from "src/interfaces/IBookTikcker.interface";
 import { IPrices } from "src/interfaces/IPrices.interface";
 
 @Injectable()
 export class BurseService {
+  private readonly cacheKey = "BTCUSDT_FEE";
+
   constructor(
     private readonly configService: ConfigService,
     private readonly schedulerRegistry: SchedulerRegistry,
@@ -36,6 +38,7 @@ export class BurseService {
         bidPrice: +parseFloat(data.bidPrice).toFixed(8), //8 digits after comma
         askPrice: +parseFloat(data.askPrice).toFixed(8),
       };
+      this.cacheService.delete(this.cacheKey);
 
       return clearPrices;
     } catch {
@@ -47,20 +50,18 @@ export class BurseService {
   }
 
   async defineBTCPriceFee() {
-    const cacheKey = "BTCUSDT_FEE";
     let prices: IPrices = await this.getBTCBookTicker();
     const fee = 1 + this.configService.get<number>("service_fee") / 100;
+    const fee1 = this.configService.get<number>("service_fee");
     prices.askPrice *= fee;
     prices.bidPrice *= fee;
     prices.averagePrice = (prices.askPrice + prices.bidPrice) / 2;
-    this.cacheService.delete(cacheKey);
-    this.cacheService.save(cacheKey, prices, 10);
+    this.cacheService.save(this.cacheKey, prices, 10);
     return prices;
   }
 
   async getBTCWithFee() {
-    const cacheKey = "BTCUSDT_FEE";
-    const data = this.cacheService.get(cacheKey);
+    const data = this.cacheService.get(this.cacheKey);
 
     if (!data) {
       return await this.defineBTCPriceFee();
